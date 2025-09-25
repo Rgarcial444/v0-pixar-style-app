@@ -1,0 +1,527 @@
+"use client"
+
+import { useEffect, useMemo, useState } from "react"
+import { Plus, Search, CalendarIcon } from 'lucide-react'
+import { Input } from "@/components/ui/input"
+import { Card, CardContent } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { useToast } from "@/hooks/use-toast"
+import PixarHeader from "@/components/pixar-header"
+import StoryForm from "@/components/story-form"
+import StoryList from "@/components/story-list"
+import BackupTools from "@/components/backup-tools"
+import type { Story } from "@/types/story"
+import { getAllStories } from "@/lib/db"
+import ToyCarButton from "@/components/toy-car-button"
+
+export default function Page() {
+  const [stories, setStories] = useState<Story[]>([])
+  const [query, setQuery] = useState("")
+  const [dateFilter, setDateFilter] = useState<string>("")
+  const [showForm, setShowForm] = useState(false)
+  const { toast } = useToast()
+
+  const refresh = async () => {
+    const data = await getAllStories()
+    setStories(data)
+  }
+
+  useEffect(() => {
+    refresh()
+  }, [])
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return stories.filter((s) => {
+      const matchesQuery = !q || s.title.toLowerCase().includes(q) || s.text.toLowerCase().includes(q)
+      const matchesDate = !dateFilter || s.createdAt.slice(0, 10) === dateFilter
+      return matchesQuery && matchesDate
+    })
+  }, [stories, query, dateFilter])
+
+  return (
+    <main className="min-h-screen bg-gradient-to-b from-sky-50 via-emerald-50 to-teal-50">
+      <PixarHeader />
+      <div className="px-4 md:px-8 lg:px-12 -mt-16 relative z-10">
+        <Card className="border-none shadow-lg">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <h2 className="text-xl font-semibold text-emerald-900/90">Tu compendio de recuerdos</h2>
+              <div className="flex gap-2">
+                <ToyCarButton onClick={() => setShowForm((s) => !s)} className="group">
+                  <Plus className="h-4 w-4" />
+                  {showForm ? "Cerrar" : "Nuevo cuento"}
+                </ToyCarButton>
+              </div>
+            </div>
+
+            {showForm && (
+              <>
+                <Separator className="my-4" />
+                <StoryForm
+                  onCreated={() => {
+                    setShowForm(false)
+                    refresh()
+                    toast({ title: "Cuento guardado", description: "Se agregó a tu compendio." })
+                  }}
+                />
+              </>
+            )}
+
+            <Separator className="my-4" />
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="flex-1 flex items-center gap-2">
+                <Search className="h-4 w-4 text-sky-600" />
+                <Input
+                  placeholder="Buscar por título o texto..."
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4 text-emerald-600" />
+                <Input
+                  type="date"
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className="w-[180px]"
+                />
+                {dateFilter && (
+                  <ToyCarButton variant="secondary" onClick={() => setDateFilter("")}>
+                    Limpiar
+                  </ToyCarButton>
+                )}
+              </div>
+            </div>
+
+            <Separator className="my-4" />
+            <StoryList stories={filtered} onChange={refresh} />
+
+            <Separator className="my-6" />
+            <BackupTools onImported={refresh} />
+          </CardContent>
+        </Card>
+      </div>
+      <footer className="px-4 md:px-8 lg:px-12 py-10 text-center text-sm text-muted-foreground">
+        {
+          "Consejo: Haz una copia de seguridad periódica con 'Exportar copia' para preservar tus recuerdos a largo plazo."
+        }
+      </footer>
+    </main>
+  )
+}
+"use client"
+import { Star, Cloud } from 'lucide-react'
+import { cn } from "@/lib/utils"
+
+export default function PixarHeader() {
+  return (
+    <header className="relative overflow-hidden">
+      <div className="relative">
+        <div className="h-[260px] md:h-[320px] bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-sky-300 via-emerald-200 to-teal-200" />
+        {/* Soft blobs in blue/green */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-8 -left-8 w-40 h-40 bg-sky-200 rounded-full blur-3xl opacity-60" />
+          <div className="absolute top-10 right-6 w-52 h-52 bg-emerald-200 rounded-full blur-3xl opacity-60" />
+          <div className="absolute bottom-0 left-1/3 w-56 h-56 bg-teal-200 rounded-full blur-3xl opacity-60" />
+        </div>
+        {/* Subtle sparkles */}
+        <SparkleDot className="left-10 top-6" />
+        <SparkleDot className="left-24 top-20" />
+        <SparkleDot className="right-10 top-10" />
+        <SparkleDot className="right-24 bottom-10" />
+        {/* Title */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="mt-1 text-3xl md:text-5xl font-extrabold tracking-tight text-emerald-900">
+              {"Nuestros recuerdos"}
+            </h1>
+            <p className="mt-2 max-w-2xl mx-auto text-sm md:text-base text-emerald-900/80">
+              {"Guarda cuentos e imágenes a diario para abrirlos en 15 años como un cofre de tesoros."}
+            </p>
+          </div>
+        </div>
+        {/* Cloud band */}
+        <div className="absolute -bottom-4 left-0 right-0 h-24">
+          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-white/60 to-white" />
+          <div className="absolute inset-0 flex justify-center gap-6 opacity-70">
+            <Cloud className="h-10 w-10 text-white" />
+            <Cloud className="h-8 w-8 text-white" />
+            <Cloud className="h-12 w-12 text-white" />
+            <Cloud className="h-8 w-8 text-white" />
+          </div>
+        </div>
+      </div>
+    </header>
+  )
+}
+
+function SparkleDot({ className }: { className?: string }) {
+  return (
+    <div className={cn("absolute", className)}>
+      <Star className="h-4 w-4 text-sky-600/80" />
+    </div>
+  )
+}
+"use client"
+
+import type React from "react"
+
+import { useEffect, useMemo, useRef, useState } from "react"
+import ToyCarButton from "@/components/toy-car-button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent } from "@/components/ui/card"
+import { ImagePlus, Loader2 } from 'lucide-react'
+import { useToast } from "@/hooks/use-toast"
+import { addStory } from "@/lib/db"
+import { resizeImageToBlob } from "@/lib/images"
+
+type Props = {
+  onCreated?: () => void
+}
+
+export default function StoryForm({ onCreated }: Props) {
+  const { toast } = useToast()
+  const [title, setTitle] = useState("")
+  const [text, setText] = useState("")
+  const [file, setFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const inputRef = useRef<HTMLInputElement | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
+
+  const handleFile = async (f: File | null) => {
+    if (!f) {
+      setFile(null)
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+      setPreviewUrl(null)
+      return
+    }
+    setFile(f)
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    const url = URL.createObjectURL(f)
+    setPreviewUrl(url)
+  }
+
+  const words = useMemo(() => text.trim().split(/\s+/).filter(Boolean).length, [text])
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!title.trim()) {
+      toast({ title: "Falta el título", description: "Por favor, agrega un título.", variant: "destructive" })
+      return
+    }
+    if (!file) {
+      toast({ title: "Falta la imagen", description: "Añade una imagen de portada.", variant: "destructive" })
+      return
+    }
+    try {
+      setSaving(true)
+      const resized = await resizeImageToBlob(file, 1600, 0.9)
+      const storyDateISO = new Date().toISOString() // set automatically
+      await addStory({
+        title: title.trim(),
+        text: text.trim(),
+        createdAt: storyDateISO,
+        imageBlob: resized,
+        imageType: resized.type || file.type || "image/jpeg",
+      })
+      setTitle("")
+      setText("")
+      handleFile(null)
+      onCreated?.()
+    } catch (err) {
+      console.error(err)
+      toast({ title: "Error al guardar", description: "Inténtalo nuevamente.", variant: "destructive" })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="grid gap-4">
+      <div className="grid md:grid-cols-1 gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="title">Título</Label>
+          <Input
+            id="title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Ej. El dragón que dibujaba estrellas"
+          />
+        </div>
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="text">Texto del cuento</Label>
+        <Textarea
+          id="text"
+          rows={6}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder={"Pega aquí el cuento..."}
+        />
+        <div className="text-xs text-muted-foreground">{words} palabras</div>
+      </div>
+      <div className="grid md:grid-cols-[1fr_auto] gap-4">
+        <div className="grid gap-2">
+          <Label>Portada / Imagen del cuento</Label>
+          <div className="grid gap-3">
+            <div className="flex items-center gap-2">
+              <Input
+                ref={inputRef}
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+              />
+              <ToyCarButton type="button" variant="secondary" onClick={() => inputRef.current?.click()}>
+                <ImagePlus className="h-4 w-4" />
+                Elegir imagen
+              </ToyCarButton>
+            </div>
+            <Card className="overflow-hidden">
+              <CardContent className="p-0">
+                {previewUrl ? (
+                  <img
+                    src={previewUrl || "/placeholder.svg"}
+                    alt="Vista previa de la portada"
+                    className="w-full aspect-video object-cover"
+                  />
+                ) : (
+                  <div className="w-full aspect-video grid place-items-center text-muted-foreground text-sm">
+                    Sin imagen seleccionada
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+        <div className="flex md:flex-col gap-2 md:gap-3 justify-end items-stretch">
+          <ToyCarButton type="submit" disabled={saving} className="group">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            Guardar cuento
+          </ToyCarButton>
+        </div>
+      </div>
+    </form>
+  )
+}
+"use client"
+
+import { useRef, useState } from "react"
+import ToyCarButton from "@/components/toy-car-button"
+import { Download, Upload, Trash2 } from 'lucide-react'
+import { exportAllStories, importStories, clearAll } from "@/lib/db"
+import { useToast } from "@/hooks/use-toast"
+
+type Props = {
+  onImported?: () => void
+}
+
+export default function BackupTools({ onImported }: Props) {
+  const fileRef = useRef<HTMLInputElement | null>(null)
+  const [busy, setBusy] = useState(false)
+  const { toast } = useToast()
+
+  const onExport = async () => {
+    setBusy(true)
+    try {
+      const blob = await exportAllStories()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      const ts = new Date().toISOString().replace(/[:.]/g, "-")
+      a.download = `cuentoteca-backup-${ts}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+      toast({ title: "Copia exportada", description: "Guárdala en un lugar seguro." })
+    } catch (e) {
+      console.error(e)
+      toast({ title: "Error al exportar", variant: "destructive" })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const onImport = async (file: File | null) => {
+    if (!file) return
+    setBusy(true)
+    try {
+      const text = await file.text()
+      await importStories(text)
+      toast({ title: "Copia importada", description: "Tus cuentos se cargaron correctamente." })
+      onImported?.()
+    } catch (e) {
+      console.error(e)
+      toast({ title: "Error al importar", description: "Verifica el archivo.", variant: "destructive" })
+    } finally {
+      setBusy(false)
+      if (fileRef.current) fileRef.current.value = ""
+    }
+  }
+
+  const onClear = async () => {
+    if (!confirm("Esto borrará todos tus cuentos del dispositivo actual. ¿Continuar?")) return
+    await clearAll()
+    toast({ title: "Base vaciada" })
+    onImported?.()
+  }
+
+  return (
+    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      <div className="text-sm text-muted-foreground">
+        {"Haz copias de seguridad periódicas para proteger tus recuerdos a largo plazo."}
+      </div>
+      <div className="flex gap-2 flex-wrap">
+        <ToyCarButton onClick={onExport} disabled={busy} variant="secondary" className="group">
+          <Download className="h-4 w-4" />
+          Exportar copia
+        </ToyCarButton>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json"
+          className="hidden"
+          onChange={(e) => onImport(e.target.files?.[0] ?? null)}
+        />
+        <ToyCarButton onClick={() => fileRef.current?.click()} disabled={busy} variant="secondary" className="group">
+          <Upload className="h-4 w-4" />
+          Importar
+        </ToyCarButton>
+        <ToyCarButton onClick={onClear} disabled={busy} variant="danger" className="group">
+          <Trash2 className="h-4 w-4" />
+          Borrar todo
+        </ToyCarButton>
+      </div>
+    </div>
+  )
+}
+"use client"
+
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import ToyCarButton from "@/components/toy-car-button"
+import { Badge } from "@/components/ui/badge"
+import { Trash2, BookOpen } from 'lucide-react'
+import type { Story } from "@/types/story"
+import { deleteStory } from "@/lib/db"
+import StoryDialog from "@/components/story-dialog"
+import { formatDateES, countWords } from "@/lib/format"
+import { useToast } from "@/hooks/use-toast"
+
+type Props = {
+  story: Story
+  onChange?: () => void
+}
+
+export default function StoryCard({ story, onChange }: Props) {
+  const [open, setOpen] = useState(false)
+  const [url, setUrl] = useState<string | null>(null)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    let u: string | null = null
+    if (story.imageBlob) {
+      u = URL.createObjectURL(story.imageBlob)
+      setUrl(u)
+    }
+    return () => {
+      if (u) URL.revokeObjectURL(u)
+    }
+  }, [story.imageBlob])
+
+  const onDelete = async () => {
+    if (!confirm("¿Eliminar este cuento? Esta acción no se puede deshacer.")) return
+    await deleteStory(story.id)
+    toast({ title: "Cuento eliminado" })
+    onChange?.()
+  }
+
+  return (
+    <>
+      <Card className="overflow-hidden group">
+        <CardContent className="p-0">
+          {url ? (
+            <img
+              src={url || "/placeholder.svg"}
+              alt={"Portada de " + story.title}
+              className="w-full aspect-video object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            />
+          ) : (
+            <div className="w-full aspect-video bg-gradient-to-br from-sky-100 to-emerald-100" />
+          )}
+        </CardContent>
+        <CardFooter className="p-4 grid gap-2">
+          <div className="flex items-center justify-between">
+            <h4 className="font-semibold line-clamp-1">{story.title}</h4>
+            <Badge variant="secondary">{countWords(story.text)} palabras</Badge>
+          </div>
+          <div className="text-xs text-muted-foreground">{formatDateES(story.createdAt)}</div>
+          <div className="flex gap-2">
+            <ToyCarButton className="flex-1 group" onClick={() => setOpen(true)}>
+              <BookOpen className="h-4 w-4" />
+              Leer
+            </ToyCarButton>
+            <ToyCarButton variant="danger" onClick={onDelete} aria-label="Eliminar">
+              <Trash2 className="h-4 w-4" />
+            </ToyCarButton>
+          </div>
+        </CardFooter>
+      </Card>
+      <StoryDialog open={open} onOpenChange={setOpen} story={story} />
+    </>
+  )
+}
+"use client"
+
+import { useMemo } from "react"
+import { formatDateES } from "@/lib/format"
+import type { Story } from "@/types/story"
+import StoryCard from "@/components/story-card"
+
+type Props = {
+  stories: Story[]
+  onChange?: () => void
+}
+
+export default function StoryList({ stories, onChange }: Props) {
+  const groups = useMemo(() => {
+    const map = new Map<string, Story[]>()
+    const sorted = [...stories].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    for (const s of sorted) {
+      const day = s.createdAt.slice(0, 10)
+      if (!map.has(day)) map.set(day, [])
+      map.get(day)!.push(s)
+    }
+    return Array.from(map.entries())
+  }, [stories])
+
+  if (stories.length === 0) {
+    return (
+      <div className="text-center py-14 text-muted-foreground">
+        {"Aún no hay cuentos. ¡Crea el primero con 'Nuevo cuento'!"}
+      </div>
+    )
+  }
+
+  return (
+    <div className="grid gap-8">
+      {groups.map(([day, items]) => (
+        <section key={day} className="grid gap-3">
+          <h3 className="text-sm font-medium text-emerald-900/80">{formatDateES(day)}</h3>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {items.map((story) => (
+              <StoryCard key={story.id} story={story} onChange={onChange} />
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  )
+}
