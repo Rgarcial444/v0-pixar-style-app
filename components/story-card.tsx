@@ -38,49 +38,34 @@ export default function StoryCard({ story, onChange }: Props) {
   const { toast } = useToast()
 
   useEffect(() => {
-    console.log("=== STORY CARD ===")
-    console.log("Story:", story.title)
-    console.log("Has imageBlob:", !!story.imageBlob)
-    console.log("Has imageDataUrl:", !!story.imageDataUrl)
-    console.log("imageDataUrl:", story.imageDataUrl?.substring(0, 50) + "...")
-
     let objectUrl: string | null = null
     setImageError(false)
     setImageLoading(true)
 
     const loadImage = async () => {
       try {
-        // Prioridad 1: URL directa de Supabase
-        if (story.imageDataUrl && story.imageDataUrl.startsWith("http")) {
-          console.log("Using Supabase URL")
+        if (story.imageDataUrl?.startsWith("http")) {
           setImageUrl(story.imageDataUrl)
           setImageLoading(false)
           return
         }
 
-        // Prioridad 2: Data URL
-        if (story.imageDataUrl && story.imageDataUrl.startsWith("data:")) {
-          console.log("Using data URL")
+        if (story.imageDataUrl?.startsWith("data:")) {
           setImageUrl(story.imageDataUrl)
           setImageLoading(false)
           return
         }
 
-        // Prioridad 3: Blob local
         if (story.imageBlob) {
-          console.log("Creating object URL from blob")
           objectUrl = URL.createObjectURL(story.imageBlob)
           setImageUrl(objectUrl)
           setImageLoading(false)
           return
         }
 
-        // Sin imagen
-        console.log("No image available")
         setImageUrl(null)
         setImageLoading(false)
-      } catch (error) {
-        console.error("Error loading image:", error)
+      } catch {
         setImageError(true)
         setImageLoading(false)
       }
@@ -92,8 +77,8 @@ export default function StoryCard({ story, onChange }: Props) {
       if (objectUrl) {
         try {
           URL.revokeObjectURL(objectUrl)
-        } catch (error) {
-          console.warn("Error revoking object URL:", error)
+        } catch {
+          // ignore
         }
       }
     }
@@ -106,7 +91,6 @@ export default function StoryCard({ story, onChange }: Props) {
   }
 
   const onDelete = async () => {
-    // Validar contraseña de owner
     if (password !== "Maggie96") {
       setPasswordError(true)
       toast({
@@ -120,10 +104,9 @@ export default function StoryCard({ story, onChange }: Props) {
     try {
       setIsDeleting(true)
       await deleteStory(story.id)
-      toast({ title: "Cuento eliminado por el administrador" })
+      toast({ title: "Cuento eliminado" })
       onChange?.()
-    } catch (error) {
-      console.error("Error deleting story:", error)
+    } catch {
       toast({ title: "Error al eliminar", variant: "destructive" })
     } finally {
       setIsDeleting(false)
@@ -137,67 +120,45 @@ export default function StoryCard({ story, onChange }: Props) {
 
   return (
     <>
-      <Card className="overflow-hidden group">
-        <CardContent className="p-0">
+      <Card className="overflow-hidden group h-full flex flex-col">
+        <CardContent className="p-0 flex-shrink-0">
           {imageLoading ? (
-            <div className="w-full h-32 bg-gradient-to-br from-sky-100 to-emerald-100 flex items-center justify-center">
-              <div className="text-xs text-muted-foreground">Cargando imagen...</div>
+            <div className="w-full aspect-[16/9] bg-gradient-to-br from-sky-100 to-emerald-100 flex items-center justify-center">
+              <div className="text-xs text-muted-foreground">...</div>
             </div>
           ) : imageUrl && !imageError ? (
             <div className="relative">
               <img
-                src={imageUrl || "/placeholder.svg"}
-                alt={"Portada de " + story.title}
-                className="w-full h-32 object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-                onLoad={() => {
-                  console.log("✅ Card image loaded successfully for:", story.title)
-                }}
-                onError={(e) => {
-                  console.error("❌ Card image failed to load for:", story.title)
-                  console.error("Failed URL:", imageUrl)
-                  setImageError(true)
-                }}
+                src={imageUrl}
+                alt={story.title}
+                loading="lazy"
+                className="w-full aspect-[16/9] object-cover"
               />
-              {/* Indicador de que tiene imagen */}
-              <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
-                <ImageIcon className="h-3 w-3 inline mr-1" />
-                Con imagen
-              </div>
-            </div>
-          ) : hasImage ? (
-            <div className="w-full h-32 bg-gradient-to-br from-red-100 to-orange-100 flex items-center justify-center">
-              <div className="text-center">
-                <ImageIcon className="h-8 w-8 text-red-400 mx-auto mb-1" />
-                <div className="text-xs text-red-600">Error cargando imagen</div>
+              <div className="absolute top-2 left-2 bg-green-500/90 text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">
+                <ImageIcon className="h-3 w-3" />
               </div>
             </div>
           ) : (
-            <div className="w-full h-32 bg-gradient-to-br from-sky-100 to-emerald-100 flex items-center justify-center">
-              <div className="text-center">
-                <ImageIcon className="h-8 w-8 text-gray-400 mx-auto mb-1" />
-                <div className="text-xs text-gray-500">Sin imagen</div>
-              </div>
+            <div className="w-full aspect-[16/9] bg-gradient-to-br from-sky-100 to-emerald-100 flex items-center justify-center">
+              <ImageIcon className="h-8 w-8 text-gray-400" />
             </div>
           )}
         </CardContent>
-        <CardFooter className="p-4 grid gap-2">
-          <div className="flex items-center justify-between">
-            <h4 className="font-semibold line-clamp-1">{story.title}</h4>
-            <Badge variant="secondary">{countWords(story.text)} palabras</Badge>
+        <CardFooter className="p-3 md:p-4 flex flex-col gap-2 flex-grow">
+          <div className="w-full">
+            <h4 className="font-semibold text-sm md:text-base line-clamp-1">{story.title}</h4>
+            <div className="flex items-center justify-between mt-1">
+              <span className="text-xs text-muted-foreground">{formatDateES(story.createdAt)}</span>
+              <Badge variant="secondary" className="text-[10px] md:text-xs">{countWords(story.text)} palabras</Badge>
+            </div>
           </div>
-          <div className="text-xs text-muted-foreground">{formatDateES(story.createdAt)}</div>
 
-          <div className="flex gap-2">
-            <ToyCarButton className="flex-1 group" onClick={() => setOpen(true)} showWheels={false}>
+          <div className="flex gap-2 w-full mt-auto">
+            <ToyCarButton className="flex-1" onClick={() => setOpen(true)} showWheels={false}>
               <BookOpen className="h-4 w-4" />
-              Leer
+              <span className="ml-1 text-xs md:text-sm">Leer</span>
             </ToyCarButton>
-            <ToyCarButton
-              variant="danger"
-              onClick={handleDeleteClick}
-              aria-label="Eliminar (Solo administrador)"
-              showWheels={false}
-            >
+            <ToyCarButton variant="danger" onClick={handleDeleteClick} showWheels={false} className="px-2">
               <Trash2 className="h-4 w-4" />
             </ToyCarButton>
           </div>
@@ -205,38 +166,28 @@ export default function StoryCard({ story, onChange }: Props) {
       </Card>
       <StoryDialog open={open} onOpenChange={setOpen} story={story} />
 
-      {/* Dialog de confirmación para eliminar con contraseña */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-sm mx-4">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600">
               <Lock className="h-5 w-5" />
-              Acceso de Administrador
+              Eliminar cuento
             </DialogTitle>
-            <DialogDescription className="space-y-3">
-              <div>
-                Para eliminar <strong>"{story.title}"</strong>, ingresa la contraseña de administrador:
-              </div>
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <p className="text-red-800 text-sm">
-                  ⚠️ Solo el owner puede eliminar cuentos. Esta acción no se puede deshacer.
-                </p>
-              </div>
+            <DialogDescription>
+              Para eliminar <strong>"{story.title}"</strong>, ingresa la contraseña:
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-2">
-            <Label htmlFor="admin-password">Contraseña de Administrador</Label>
+          <div className="space-y-3">
             <Input
-              id="admin-password"
               type="password"
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value)
                 setPasswordError(false)
               }}
-              placeholder="Ingresa la contraseña"
-              className={passwordError ? "border-red-500 focus:border-red-500" : ""}
+              placeholder="Contraseña"
+              className={passwordError ? "border-red-500" : ""}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && password.trim()) {
                   onDelete()
@@ -244,38 +195,16 @@ export default function StoryCard({ story, onChange }: Props) {
               }}
             />
             {passwordError && (
-              <p className="text-sm text-red-600">
-                Contraseña incorrecta. Solo el administrador puede eliminar cuentos.
-              </p>
+              <p className="text-sm text-red-600">Contraseña incorrecta</p>
             )}
           </div>
 
           <DialogFooter className="gap-2">
-            <ToyCarButton
-              variant="secondary"
-              onClick={() => {
-                setShowDeleteDialog(false)
-                setPassword("")
-                setPasswordError(false)
-              }}
-              showWheels={false}
-            >
+            <ToyCarButton variant="secondary" onClick={() => setShowDeleteDialog(false)} showWheels={false}>
               Cancelar
             </ToyCarButton>
-            <ToyCarButton
-              variant="danger"
-              onClick={onDelete}
-              disabled={!password.trim() || isDeleting}
-              showWheels={false}
-            >
-              {isDeleting ? (
-                <>Eliminando...</>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Eliminar
-                </>
-              )}
+            <ToyCarButton variant="danger" onClick={onDelete} disabled={!password.trim() || isDeleting} showWheels={false}>
+              {isDeleting ? "Eliminando..." : "Eliminar"}
             </ToyCarButton>
           </DialogFooter>
         </DialogContent>

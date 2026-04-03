@@ -437,104 +437,50 @@ export default function StoryForm({ onCreated }: Props) {
           </Label>
 
           {previewUrl ? (
-            <div className="space-y-3 md:space-y-4">
-              {/* Vista previa */}
-              <div className="relative bg-white rounded-xl md:rounded-2xl p-2 shadow-lg">
+            <div className="space-y-3">
+              <div className="relative">
                 <img
-                  src={previewUrl || "/placeholder.svg"}
-                  alt="Vista previa de la imagen"
-                  className="w-full h-48 md:h-72 object-cover rounded-lg md:rounded-xl"
-                  onLoad={() => addDebugInfo("✅ Preview cargado correctamente")}
-                  onError={() => addDebugInfo("❌ Error cargando preview")}
+                  src={previewUrl}
+                  alt="Vista previa"
+                  className="w-full h-40 md:h-52 object-cover rounded-xl"
                 />
                 <button
                   type="button"
                   onClick={clearImage}
-                  className="absolute top-3 right-3 md:top-4 md:right-4 p-1.5 md:p-2 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-lg transition-colors"
-                  title="Quitar imagen"
+                  className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600"
                 >
-                  <X className="h-4 w-4 md:h-5 md:w-5" />
+                  <X className="h-4 w-4" />
                 </button>
               </div>
-
-              {/* Info de la imagen - SIMPLIFICADA */}
-              <div className="bg-green-100 border border-green-300 rounded-lg p-3">
-                <div className="text-green-800 font-medium text-sm md:text-base">✅ Imagen lista para guardar</div>
-              </div>
-
-              {/* Botones de acción */}
-              <div className="grid grid-cols-2 gap-2 md:gap-3">
-                <ToyCarButton
-                  type="button"
-                  variant="secondary"
-                  onClick={() => inputRef.current?.click()}
-                  showWheels={false}
-                  className="h-10 md:h-11 text-xs md:text-sm"
-                >
-                  <ImagePlus className="h-4 w-4 md:mr-2" />
-                  <span className="hidden md:inline">Cambiar</span>
-                </ToyCarButton>
-                <ToyCarButton
-                  type="button"
-                  variant="secondary"
-                  onClick={clearImage}
-                  showWheels={false}
-                  className="h-10 md:h-11 text-xs md:text-sm"
-                >
-                  <X className="h-4 w-4 md:h-5 md:w-5" />
-                  <span className="hidden md:inline">Quitar</span>
-                </ToyCarButton>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => inputRef.current?.click()} className="flex-1 flex items-center justify-center gap-2 py-2 bg-white border border-sky-200 rounded-lg text-sm">
+                  <ImagePlus className="h-4 w-4" />
+                  Cambiar
+                </button>
               </div>
             </div>
           ) : (
-            <div className="space-y-3 md:space-y-4">
-              {/* Zona de drop */}
+            <div className="space-y-3">
               <div
                 className={cn(
-                  "w-full h-32 md:h-48 border-2 border-dashed rounded-xl md:rounded-2xl flex items-center justify-center transition-all duration-300",
-                  isDragOver ? "border-emerald-400 bg-emerald-50/80 shadow-inner" : "border-sky-300 bg-white/50",
+                  "w-full h-24 md:h-32 border-2 border-dashed rounded-xl flex items-center justify-center transition-all duration-300 cursor-pointer",
+                  isDragOver ? "border-emerald-400 bg-emerald-50" : "border-sky-300 bg-white/50 hover:border-sky-400",
                 )}
+                onClick={() => inputRef.current?.click()}
               >
-                <div className="text-center p-4 md:p-6">
-                  {isDragOver ? (
-                    <>
-                      <Upload className="h-12 w-12 md:h-20 md:w-20 text-emerald-600 mx-auto mb-2 md:mb-4 animate-bounce" />
-                      <div className="text-lg md:text-xl font-bold text-emerald-800 mb-1 md:mb-2">¡Suelta aquí!</div>
-                    </>
-                  ) : (
-                    <>
-                      <ImagePlus className="h-10 w-10 md:h-16 md:w-16 text-sky-600 mx-auto mb-2 md:mb-4" />
-                      <div className="text-sm md:text-lg font-semibold text-sky-800 mb-1 md:mb-2">
-                        Agregar una imagen
-                      </div>
-                      <div className="text-xs md:text-sm text-sky-600 bg-sky-100 rounded-full px-2 md:px-3 py-1 inline-block">
-                        💡 También puedes arrastrar desde tu galería
-                      </div>
-                    </>
-                  )}
+                <div className="text-center">
+                  <ImagePlus className="h-8 w-8 md:h-12 md:w-12 text-sky-500 mx-auto mb-2" />
+                  <p className="text-xs md:text-sm text-sky-600">Toca o arrastra una imagen</p>
                 </div>
               </div>
-
-              {/* Botones pequeños e intuitivos */}
-              <div className="flex items-center justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => inputRef.current?.click()}
-                  className="flex items-center gap-2 px-4 py-2 bg-white border border-sky-200 rounded-lg hover:bg-sky-50 hover:border-sky-300 transition-colors shadow-sm"
-                  title="Seleccionar desde galería"
-                >
-                  <FolderOpen className="h-4 w-4 text-sky-600" />
-                  <span className="text-sm text-sky-700 font-medium">Galería</span>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => inputRef.current?.click()} className="flex-1 flex items-center justify-center gap-2 py-2 bg-white border border-sky-200 rounded-lg text-sm text-sky-700">
+                  <FolderOpen className="h-4 w-4" />
+                  Galería
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => cameraInputRef.current?.click()}
-                  className="flex items-center gap-2 px-4 py-2 bg-white border border-emerald-200 rounded-lg hover:bg-emerald-50 hover:border-emerald-300 transition-colors shadow-sm"
-                  title="Tomar foto con cámara"
-                >
-                  <Camera className="h-4 w-4 text-emerald-600" />
-                  <span className="text-sm text-emerald-700 font-medium">Cámara</span>
+                <button type="button" onClick={() => cameraInputRef.current?.click()} className="flex-1 flex items-center justify-center gap-2 py-2 bg-white border border-emerald-200 rounded-lg text-sm text-emerald-700">
+                  <Camera className="h-4 w-4" />
+                  Cámara
                 </button>
               </div>
             </div>
@@ -552,45 +498,29 @@ export default function StoryForm({ onCreated }: Props) {
           />
         </div>
 
-        {/* Acciones finales */}
-        <div className="space-y-3 md:space-y-0 md:flex md:items-center md:justify-between">
-          <div className="flex items-center gap-2 text-emerald-800 justify-center md:justify-start">
-            {title.trim() && text.trim() ? (
-              <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-emerald-600" />
-            ) : (
-              <ImagePlus className="h-4 w-4 md:h-5 md:w-5 text-sky-600" />
-            )}
-            <span className="text-xs md:text-sm text-center md:text-left">
-              {title.trim() && text.trim() ? "¡Listo para compartir!" : "Completa título y cuento para continuar"}
-            </span>
-          </div>
-
-          <div className="flex flex-col md:flex-row gap-2 md:gap-3">
-            <ToyCarButton
-              type="submit"
-              disabled={saving || !title.trim() || !text.trim()}
-              className="h-12 md:h-11 px-6 text-sm md:text-base font-semibold"
-              showWheels={false}
-            >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              {saving ? "Guardando..." : "Compartir cuento"}
-            </ToyCarButton>
-            <ToyCarButton
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setTitle("")
-                setText("")
-                clearImage()
-                setDebugInfo([])
-                setShowDebug(false)
-              }}
-              showWheels={false}
-              className="h-12 md:h-11 px-6 text-sm md:text-base"
-            >
-              Limpiar todo
-            </ToyCarButton>
-          </div>
+        <div className="flex flex-col sm:flex-row gap-2 pt-2">
+          <ToyCarButton
+            type="submit"
+            disabled={saving || !title.trim() || !text.trim()}
+            className="flex-1 h-11 font-semibold"
+            showWheels={false}
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+            <span className="ml-2">{saving ? "Guardando..." : "Guardar"}</span>
+          </ToyCarButton>
+          <ToyCarButton
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              setTitle("")
+              setText("")
+              clearImage()
+            }}
+            showWheels={false}
+            className="h-11 px-4"
+          >
+            Limpiar
+          </ToyCarButton>
         </div>
       </form>
     </div>
