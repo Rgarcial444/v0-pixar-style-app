@@ -49,12 +49,7 @@ export default function StoryForm({ onCreated }: Props) {
     setDebugInfo((prev) => [...prev.slice(-9), `${new Date().toLocaleTimeString()}: ${info}`])
   }, [])
 
-  // Limpiar URL al desmontar o cambiar archivo
-  useEffect(() => {
-    return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl)
-    }
-  }, [previewUrl])
+
 
   // Paso activo: 1 título, 2 cuento, 3 imagen
   const step: 1 | 2 | 3 = title.trim() ? (text.trim() ? 3 : 2) : 1

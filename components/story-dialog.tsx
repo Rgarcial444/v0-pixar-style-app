@@ -77,11 +77,14 @@ export default function StoryDialog({ open, onOpenChange, story }: Props) {
   }
 
   useEffect(() => {
+    let isActive = true
+
     if (open) {
       loadImage()
     }
 
     return () => {
+      isActive = false
       if (url && url.startsWith("blob:")) {
         try {
           URL.revokeObjectURL(url)
@@ -90,7 +93,7 @@ export default function StoryDialog({ open, onOpenChange, story }: Props) {
         }
       }
     }
-  }, [open, story.id, story.imageBlob, story.imageDataUrl])
+  }, [open, story.id])
 
   const hasImage = story.imageBlob || story.imageDataUrl
 
