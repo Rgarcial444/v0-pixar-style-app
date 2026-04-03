@@ -1,12 +1,11 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Plus, Search, CalendarIcon, Sparkles, AlertCircle } from "lucide-react"
+import { Plus, Search, CalendarIcon, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useToast } from "@/hooks/use-toast"
 import PixarHeader from "@/components/pixar-header"
 import StoryForm from "@/components/story-form"
@@ -14,7 +13,6 @@ import StoryList from "@/components/story-list"
 import BackupTools from "@/components/backup-tools"
 import MagicBackground from "@/components/magic-background"
 import CloudStatus from "@/components/cloud-status"
-import SupabaseSetup from "@/components/supabase-setup"
 import DebugPanel from "@/components/debug-panel"
 import type { Story } from "@/types/story"
 import { getAllStories, checkDatabaseStatus } from "@/lib/hybrid-db"
@@ -92,30 +90,8 @@ export default function Page() {
       <PixarHeader onRefresh={refresh} />
 
       <div className="px-4 md:px-8 lg:px-12 -mt-16 relative z-10">
-        {/* Mostrar configuración de Supabase si las tablas no están creadas */}
-        {showSupabaseSetup && <SupabaseSetup />}
-
         <Card className="border-none shadow-lg">
           <CardContent className="p-4 md:p-6">
-            {/* Alertas simplificadas - SIN alerta de nube activa */}
-            {!dbStatus.supabaseConfigured ? (
-              <Alert className="mb-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Modo local:</strong> Los cuentos solo se guardan en este dispositivo. Para compartir entre
-                  dispositivos, configura Supabase.
-                </AlertDescription>
-              </Alert>
-            ) : !dbStatus.tablesExist ? (
-              <Alert className="mb-4 border-amber-200 bg-amber-50">
-                <AlertCircle className="h-4 w-4 text-amber-600" />
-                <AlertDescription className="text-amber-800">
-                  <strong>Configuración pendiente:</strong> Supabase está configurado pero necesitas ejecutar el script
-                  SQL para crear las tablas.
-                </AlertDescription>
-              </Alert>
-            ) : null}
-
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-blue-600" />
