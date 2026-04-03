@@ -80,7 +80,7 @@ export default function PixarHeader({ onRefresh }: Props) {
               {"Nuestros cuentos"}
             </h1>
             <p className="mt-2 max-w-2xl mx-auto text-sm md:text-base text-indigo-900/80">
-              {"Aquí venimos a guardar y seguir guardando recuerdos hasta que nos de la vida"}
+              {"Cada cuento es un tesoro que merece vivir para siempre"}
             </p>
           </div>
         </div>
