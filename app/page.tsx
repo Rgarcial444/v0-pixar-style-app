@@ -13,6 +13,7 @@ import StoryList from "@/components/story-list"
 import BackupTools from "@/components/backup-tools"
 import MagicBackground from "@/components/magic-background"
 import CloudStatus from "@/components/cloud-status"
+import SupabaseSetup from "@/components/supabase-setup"
 import DebugPanel from "@/components/debug-panel"
 import type { Story } from "@/types/story"
 import { getAllStories, checkDatabaseStatus } from "@/lib/hybrid-db"
@@ -90,6 +91,8 @@ export default function Page() {
       <PixarHeader onRefresh={refresh} />
 
       <div className="px-4 md:px-8 lg:px-12 -mt-16 relative z-10">
+        {showSupabaseSetup && <SupabaseSetup />}
+
         <Card className="border-none shadow-lg">
           <CardContent className="p-4 md:p-6">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
