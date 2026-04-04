@@ -1,8 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { forceSyncToCloud, checkDatabaseStatus } from "@/lib/hybrid-db"
 import { NeonButton } from "@/components/ui/neon-button"
+import { createClient } from "@/lib/supabase/client"
+import { LogOut, User } from "lucide-react"
 
 type Props = {
   onRefresh?: () => void
@@ -10,28 +12,30 @@ type Props = {
 
 export default function PixarHeader({ onRefresh }: Props) {
   const [syncing, setSyncing] = useState(false)
+  const [user, setUser] = useState<{ email?: string; user_metadata?: { avatar_url?: string; full_name?: string } } | null>(null)
+  const supabase = createClient()
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUser(data.user))
+  }, [])
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    window.location.href = "/login"
+  }
 
   const handleSecretSync = async () => {
     if (syncing) return
 
     try {
       setSyncing(true)
-      console.log("🔄 Sincronización secreta iniciada...")
-
       const dbStatus = await checkDatabaseStatus()
-      if (!dbStatus.tablesExist) {
-        console.log("⚠️ Nube no disponible, saltando sincronización")
-        return
-      }
+      if (!dbStatus.tablesExist) return
 
       const result = await forceSyncToCloud()
-      console.log(`✅ Sincronización completada: ${result.success} éxitos, ${result.errors} errores`)
-
-      if (onRefresh) {
-        onRefresh()
-      }
+      if (onRefresh) onRefresh()
     } catch (error) {
-      console.error("❌ Error en sincronización secreta:", error)
+      console.error("Error:", error)
     } finally {
       setSyncing(false)
     }
@@ -39,6 +43,23 @@ export default function PixarHeader({ onRefresh }: Props) {
 
   return (
     <header className="relative overflow-hidden">
+      <div className="absolute top-3 right-3 md:top-4 md:right-4 z-20 flex items-center gap-2">
+        {user?.user_metadata?.avatar_url && (
+          <img
+            src={user.user_metadata.avatar_url}
+            alt=""
+            className="w-8 h-8 rounded-full"
+          />
+        )}
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-1 px-2 py-1 bg-white/60 rounded-full text-xs text-gray-600 hover:bg-white/80 transition-colors"
+        >
+          <LogOut className="w-3 h-3" />
+          <span className="hidden sm:inline">Salir</span>
+        </button>
+      </div>
+
       <div className="relative">
         <div className="h-[260px] md:h-[320px] bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-sky-300 via-blue-200 to-indigo-200" />
 
