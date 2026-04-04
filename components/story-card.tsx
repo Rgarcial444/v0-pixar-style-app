@@ -103,7 +103,7 @@ export default function StoryCard({ story, onChange }: Props) {
 
     try {
       setIsDeleting(true)
-      await deleteStory(story.id)
+      await deleteStory(story.id, password)
       toast({ title: "Cuento eliminado" })
       onChange?.()
     } catch {

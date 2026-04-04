@@ -123,21 +123,18 @@ export async function getAllStories(): Promise<Story[]> {
   }
 }
 
-export async function deleteStory(id: string): Promise<void> {
+export async function deleteStory(id: string, password: string): Promise<void> {
   const useCloud = await canUseCloud()
 
   if (useCloud) {
     try {
-      await cloudDb.deleteStoryFromCloud(id)
-      // También eliminar localmente
+      await cloudDb.deleteStoryFromCloud(id, password)
       try {
         await localDb.deleteStory(id)
-      } catch (error) {
-        console.warn("Error deleting from local backup:", error)
-      }
+      } catch { /* ignore */ }
     } catch (error) {
-      console.error("Error deleting from cloud, falling back to local:", error)
-      await localDb.deleteStory(id)
+      console.error("Error deleting from cloud:", error)
+      throw error
     }
   } else {
     await localDb.deleteStory(id)

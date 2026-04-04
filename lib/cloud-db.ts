@@ -284,7 +284,7 @@ export async function getAllStoriesFromCloud(): Promise<Story[]> {
   }
 }
 
-export async function deleteStoryFromCloud(id: string): Promise<void> {
+export async function deleteStoryFromCloud(id: string, password: string): Promise<void> {
   if (!isSupabaseAvailable() || !supabase) {
     throw new Error("Supabase no está configurado")
   }
@@ -295,40 +295,27 @@ export async function deleteStoryFromCloud(id: string): Promise<void> {
   }
 
   try {
-    console.log("🗑️ Eliminando cuento de la nube:", id)
+    const { data: story } = await supabase.from("stories").select("image_url").eq("id", id).single()
 
-    const availableColumns = await getTableColumns()
-    const hasImageUrl = availableColumns.includes("image_url")
-
-    if (hasImageUrl) {
-      // Obtener la historia para eliminar la imagen del storage
-      const { data: story } = await supabase.from("stories").select("image_url").eq("id", id).single()
-
-      if (story?.image_url && story.image_url.startsWith("http")) {
-        // Extraer el path del archivo de la URL
-        const urlParts = story.image_url.split("/")
-        const fileName = urlParts[urlParts.length - 1]
-
-        if (fileName) {
-          try {
-            await supabase.storage.from("story-images").remove([fileName])
-            console.log("🗑️ Imagen eliminada del storage")
-          } catch (error) {
-            console.warn("⚠️ Error eliminando imagen del storage:", error)
-          }
-        }
+    if (story?.image_url && story.image_url.startsWith("http")) {
+      const urlParts = story.image_url.split("/")
+      const fileName = urlParts[urlParts.length - 1]
+      if (fileName) {
+        try {
+          await supabase.storage.from("story-images").remove([fileName])
+        } catch { /* ignore */ }
       }
     }
 
-    // Eliminar cuento de la base de datos
-    const { error } = await supabase.from("stories").delete().eq("id", id)
+    const { error } = await supabase.rpc("delete_story_with_password", {
+      story_id: id,
+      password: password
+    })
 
     if (error) {
       console.error("❌ Error eliminando cuento:", error)
       throw error
     }
-
-    console.log("✅ Cuento eliminado exitosamente")
   } catch (error) {
     console.error("❌ Error eliminando cuento de la nube:", error)
     throw error
