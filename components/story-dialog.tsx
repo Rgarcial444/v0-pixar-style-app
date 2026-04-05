@@ -20,7 +20,7 @@ export default function StoryDialog({ open, onOpenChange, story }: Props) {
   const [imageLoading, setImageLoading] = useState(false)
   const [imageExpanded, setImageExpanded] = useState(false)
 
-  const cleanText = (text: string) => text.replace(/\*/g, "")
+  const cleanText = (text: string) => text.replace(/\*/g, "").replace(/"/g, "")
   const cleanTitle = cleanText(story.title)
   const cleanTextContent = cleanText(story.text)
 
