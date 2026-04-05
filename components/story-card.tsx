@@ -120,7 +120,7 @@ export default function StoryCard({ story, onChange }: Props) {
 
   return (
     <>
-      <Card className="overflow-hidden group h-full flex flex-col">
+      <Card className="overflow-hidden group h-full flex flex-col bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow">
         <CardContent className="p-0 flex-shrink-0">
           {imageLoading ? (
             <div className="w-full aspect-[16/9] bg-gradient-to-br from-sky-100 to-emerald-100 flex items-center justify-center">
@@ -144,12 +144,12 @@ export default function StoryCard({ story, onChange }: Props) {
             </div>
           )}
         </CardContent>
-        <CardFooter className="p-3 md:p-4 flex flex-col gap-2 flex-grow">
+        <CardFooter className="p-3 md:p-4 flex flex-col gap-2 flex-grow bg-white">
           <div className="w-full">
-            <h4 className="font-semibold text-sm md:text-base line-clamp-1">{story.title}</h4>
-            <div className="flex items-center justify-between mt-1">
-              <span className="text-xs text-muted-foreground">{formatDateES(story.createdAt)}</span>
-              <Badge variant="secondary" className="text-[10px] md:text-xs">{countWords(story.text)} palabras</Badge>
+            <h4 className="font-bold text-base md:text-lg text-slate-900 line-clamp-2 leading-tight">{story.title}</h4>
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-xs text-slate-500">{formatDateES(story.createdAt)}</span>
+              <Badge variant="secondary" className="text-[10px] md:text-xs bg-slate-100 text-slate-700">{countWords(story.text)} palabras</Badge>
             </div>
           </div>
 
