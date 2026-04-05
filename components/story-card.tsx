@@ -3,14 +3,13 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import ToyCarButton from "@/components/toy-car-button"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Trash2, BookOpen, ImageIcon, Lock } from "lucide-react"
 import type { Story } from "@/types/story"
 import { deleteStory } from "@/lib/hybrid-db"
 import StoryDialog from "@/components/story-dialog"
-import { formatDateES, countWords } from "@/lib/format"
+import { formatDateES } from "@/lib/format"
 import { useToast } from "@/hooks/use-toast"
 import {
   Dialog,
@@ -146,10 +145,9 @@ export default function StoryCard({ story, onChange }: Props) {
         </CardContent>
         <CardFooter className="p-3 md:p-4 flex flex-col gap-2 flex-grow bg-white">
           <div className="w-full">
-            <h4 className="font-bold text-base md:text-lg text-slate-900 line-clamp-2 leading-tight">{story.title}</h4>
-            <div className="flex items-center justify-between mt-2">
+            <h4 className="font-bold text-base md:text-lg text-slate-900 leading-tight">{story.title}</h4>
+            <div className="flex items-center mt-2">
               <span className="text-xs text-slate-500">{formatDateES(story.createdAt)}</span>
-              <Badge variant="secondary" className="text-[10px] md:text-xs bg-slate-100 text-slate-700">{countWords(story.text)} palabras</Badge>
             </div>
           </div>
 
