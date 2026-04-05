@@ -1,0 +1,42 @@
+name: Cuento Diario
+
+on:
+  schedule:
+    # Ejecutar todos los días a las 9:00 AM hora de México
+    - cron: '0 14 * * *'
+  workflow_dispatch:
+    # Permite ejecutar manualmente desde GitHub
+
+jobs:
+  generate-story:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate daily story
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          STORY_TOPIC: ${{ vars.STORY_TOPIC || 'haditas mágicas' }}
+        run: npx tsx scripts/generate-daily-story.ts
+
+      - name: Commit story if generated
+        if: success()
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add -A
+          git commit -m "Generated daily story" || echo "No new story to commit"
+          git push
