@@ -145,7 +145,7 @@ export default function StoryCard({ story, onChange }: Props) {
         </CardContent>
         <CardFooter className="p-3 md:p-4 flex flex-col gap-2 flex-grow bg-white">
           <div className="w-full">
-            <h4 className="font-bold text-base md:text-lg text-slate-900 leading-tight">{story.title}</h4>
+            <h4 className="font-bold text-base md:text-lg text-slate-900 leading-tight">{story.title.replace(/\*/g, "")}</h4>
             <div className="flex items-center mt-2">
               <span className="text-xs text-slate-500">{formatDateES(story.createdAt)}</span>
             </div>

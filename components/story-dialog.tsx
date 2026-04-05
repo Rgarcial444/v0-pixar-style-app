@@ -18,6 +18,11 @@ export default function StoryDialog({ open, onOpenChange, story }: Props) {
   const [imageError, setImageError] = useState(false)
   const [retrying, setRetrying] = useState(false)
   const [imageLoading, setImageLoading] = useState(false)
+  const [imageExpanded, setImageExpanded] = useState(false)
+
+  const cleanText = (text: string) => text.replace(/\*/g, "")
+  const cleanTitle = cleanText(story.title)
+  const cleanTextContent = cleanText(story.text)
 
   const generateImageUrl = async (story: Story): Promise<string | null> => {
     try {
@@ -101,7 +106,7 @@ export default function StoryDialog({ open, onOpenChange, story }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl">{story.title}</DialogTitle>
+          <DialogTitle className="text-xl">{cleanTitle}</DialogTitle>
           <DialogDescription>{formatDateES(story.createdAt)}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-6">
@@ -117,14 +122,25 @@ export default function StoryDialog({ open, onOpenChange, story }: Props) {
             <div className="relative">
               <img
                 src={url || "/placeholder.svg"}
-                alt={"Imagen del cuento " + story.title}
-                className="w-full max-h-96 object-contain rounded-lg shadow-lg bg-white"
+                alt={"Imagen del cuento " + cleanTitle}
+                className={`w-full rounded-lg shadow-lg bg-white transition-all duration-300 ${
+                  imageExpanded ? "max-h-[70vh] object-contain cursor-zoom-out" : "max-h-96 object-contain cursor-zoom-in"
+                }`}
+                onClick={() => setImageExpanded(!imageExpanded)}
                 onLoad={() => console.log("Dialog image loaded successfully")}
                 onError={() => {
-                  console.warn("Dialog image failed to load for story:", story.title)
+                  console.warn("Dialog image failed to load for story:", cleanTitle)
                   setImageError(true)
                 }}
               />
+              {!imageExpanded && hasImage && (
+                <button
+                  onClick={() => setImageExpanded(true)}
+                  className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/90 hover:bg-white text-sky-700 px-4 py-2 rounded-full shadow-lg text-sm font-medium transition-all hover:scale-105"
+                >
+                  Leer
+                </button>
+              )}
             </div>
           ) : hasImage ? (
             <div className="w-full h-48 bg-gradient-to-br from-sky-100 to-emerald-100 rounded-lg flex flex-col items-center justify-center gap-3">
@@ -152,7 +168,7 @@ export default function StoryDialog({ open, onOpenChange, story }: Props) {
 
           {/* Texto del cuento */}
           <article className="prose prose-sm md:prose-base max-w-none whitespace-pre-wrap leading-relaxed text-gray-800">
-            {story.text}
+            {cleanTextContent}
           </article>
         </div>
       </DialogContent>
