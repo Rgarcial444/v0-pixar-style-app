@@ -5,7 +5,6 @@ const HF_TOKEN = process.env.HF_TOKEN
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-const TEXT_MODEL = "google/flan-t5-base"
 const IMAGE_MODEL = "stabilityai/stable-diffusion-2-1"
 
 interface StoryData {
@@ -17,18 +16,23 @@ interface StoryData {
 async function generateStoryWithHF(prompt: string): Promise<StoryData> {
   console.log("Generando cuento con Hugging Face...")
   
-  const hf = new HfInference(HF_TOKEN)
+  const hf = new HfInference(HF_TOKEN, {
+    use_cache: false
+  })
   
-  // 1. Generar texto del cuento
+  // 1. Generar texto del cuento - usar un modelo que sí funcione
   console.log("Generando texto...")
   try {
-    const result = await hf.textGeneration({
-      model: TEXT_MODEL,
-      inputs: `Genera un cuento infantil corto y mágico para niños de 3-8 años sobre ${prompt}. El cuento debe ser alegre, con personajes amigables y un final feliz. No uses asteriscos ni markdown.`,
-      parameters: {
-        max_new_tokens: 800,
-        temperature: 0.8,
-      }
+    const result = await hf.conversational({
+      model: "microsoft/Phi-3-mini-128k-instruct",
+      messages: [
+        {
+          role: "user",
+          content: `Genera un cuento infantil corto y mágico para niños de 3-8 años sobre ${prompt}. El cuento debe ser alegre, con personajes amigables y un final feliz. No uses asteriscos ni markdown. Máximo 500 palabras.`
+        }
+      ],
+      max_tokens: 500,
+      temperature: 0.8,
     })
     
     let fullText = result.generated_text || ""
