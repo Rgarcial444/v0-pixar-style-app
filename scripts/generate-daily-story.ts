@@ -5,7 +5,7 @@ const HF_TOKEN = process.env.HF_TOKEN
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-const TEXT_MODEL = "mistralai/Mistral-7B-Instruct-v0.2"
+const TEXT_MODEL = "google/flan-t5-base"
 const IMAGE_MODEL = "stabilityai/stable-diffusion-2-1"
 
 interface StoryData {
