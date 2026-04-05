@@ -156,9 +156,6 @@ export default function StoryCard({ story, onChange }: Props) {
               <BookOpen className="h-4 w-4" />
               <span className="ml-1 text-xs md:text-sm">Leer</span>
             </ToyCarButton>
-            <ToyCarButton variant="danger" onClick={handleDeleteClick} showWheels={false} className="px-2">
-              <Trash2 className="h-4 w-4" />
-            </ToyCarButton>
           </div>
         </CardFooter>
       </Card>
