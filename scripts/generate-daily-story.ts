@@ -20,10 +20,10 @@ async function generateStoryWithHF(prompt: string): Promise<StoryData> {
     use_cache: false
   })
   
-  // 1. Generar texto del cuento - usar un modelo que sí funcione
+  // 1. Generar texto del cuento usando chatCompletion
   console.log("Generando texto...")
   try {
-    const result = await hf.conversational({
+    const result = await hf.chatCompletion({
       model: "microsoft/Phi-3-mini-128k-instruct",
       messages: [
         {
@@ -35,7 +35,7 @@ async function generateStoryWithHF(prompt: string): Promise<StoryData> {
       temperature: 0.8,
     })
     
-    let fullText = result.generated_text || ""
+    let fullText = result.choices?.[0]?.message?.content || ""
     fullText = fullText.replace(/\*/g, "").replace(/#{1,6}\s/g, "").trim()
     
     const storyText = fullText.trim().substring(0, 2000)
