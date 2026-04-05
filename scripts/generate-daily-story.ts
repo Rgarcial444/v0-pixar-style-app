@@ -4,6 +4,7 @@ const HF_TOKEN = process.env.HF_TOKEN
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+const HF_API_URL = "https://router.huggingface.co/hf-inference"
 const TEXT_MODEL = "mistralai/Mistral-7B-Instruct-v0.2"
 const IMAGE_MODEL = "stabilityai/stable-diffusion-2-1"
 
@@ -17,19 +18,19 @@ async function generateStoryWithHF(prompt: string): Promise<StoryData> {
   console.log("Generando cuento con Hugging Face...")
   
   // 1. Generar texto del cuento
-  const textResponse = await fetch(`https://api-inference.huggingface.co/models/${TEXT_MODEL}`, {
+  const textResponse = await fetch(`${HF_API_URL}/text/generation`, {
     headers: {
       "Authorization": `Bearer ${HF_TOKEN}`,
       "Content-Type": "application/json",
     },
     method: "POST",
     body: JSON.stringify({
+      model: TEXT_MODEL,
       inputs: `Genera un cuento infantil corto y mágico para niños de 3-8 años sobre ${prompt}. El cuento debe ser alegre, con personajes amigables y un final feliz. No uses asteriscos ni markdown.`,
       parameters: {
         max_new_tokens: 800,
         temperature: 0.8,
         top_p: 0.9,
-        do_sample: true,
       }
     })
   })
@@ -39,7 +40,9 @@ async function generateStoryWithHF(prompt: string): Promise<StoryData> {
   }
 
   const textData = await textResponse.json()
-  let fullText = textData[0]?.generated_text || ""
+  
+  // El nuevo endpoint devuelve: { generated_text: "..." }
+  let fullText = textData.generated_text || textData[0]?.generated_text || ""
   
   // Limpiar el resultado - quitar asteriscos y markdown
   fullText = fullText.replace(/\*/g, "").replace(/#{1,6}\s/g, "").trim()
@@ -57,13 +60,14 @@ async function generateStoryWithHF(prompt: string): Promise<StoryData> {
   
   try {
     console.log("Generando imagen...")
-    const imageResponse = await fetch(`https://api-inference.huggingface.co/models/${IMAGE_MODEL}`, {
+    const imageResponse = await fetch(`${HF_API_URL}/text-to-image`, {
       headers: {
         "Authorization": `Bearer ${HF_TOKEN}`,
         "Content-Type": "application/json",
       },
       method: "POST",
       body: JSON.stringify({
+        model: IMAGE_MODEL,
         inputs: `Ilustración de cuento infantil mágica y colorida para niños: ${prompt}, estilo Disney Pixar, colores brillantes, personajes amigables, arte digital`,
         parameters: {
           negative_prompt: "ugly, distorted, dark, scary",
