@@ -95,8 +95,8 @@ export async function getAllStories(): Promise<Story[]> {
       const withImages = cloudStories.filter((s) => s.imageBlob || s.imageDataUrl).length
       console.log(`📸 ${withImages} cuentos tienen imágenes`)
 
-      // DEDUPLICAR: eliminar duplicados basándose en título+texto
-      return deduplicateStories(cloudStories)
+      // DEDUPLICAR: eliminar duplicados basándose en título+texto (y limpiar automáticamente)
+      return await deduplicateAndClean(cloudStories, true)
     } catch (error) {
       console.error("❌ Error cargando desde nube:", error)
       console.log("🔄 Fallback a almacenamiento local...")
@@ -105,7 +105,7 @@ export async function getAllStories(): Promise<Story[]> {
       try {
         const localStories = await localDb.getAllStories()
         console.log(`✅ Fallback: cargados ${localStories.length} cuentos locales`)
-        return deduplicateStories(localStories)
+        return await deduplicateAndClean(localStories, false)
       } catch (localError) {
         console.error("❌ Error cargando localmente:", localError)
         return []
@@ -116,12 +116,109 @@ export async function getAllStories(): Promise<Story[]> {
     try {
       const localStories = await localDb.getAllStories()
       console.log(`✅ Cargados ${localStories.length} cuentos locales`)
-      return deduplicateStories(localStories)
+      return await deduplicateAndClean(localStories, false)
     } catch (localError) {
       console.error("❌ Error cargando localmente:", localError)
       return []
     }
   }
+}
+
+// Función para deduplicar y limpiar duplicados persistidos de la DB
+async function deduplicateAndClean(stories: Story[], cleanFromDb: boolean): Promise<Story[]> {
+  const seen = new Set<string>()
+  const unique: Story[] = []
+  const cloudIds = new Set<string>()
+
+  for (const story of stories) {
+    // Crear clave única basada en título y texto (normalizados)
+    const key = `${story.title.trim().toLowerCase()}|${story.text.trim().toLowerCase()}`
+
+    if (!seen.has(key)) {
+      seen.add(key)
+      unique.push(story)
+      cloudIds.add(story.id)
+    } else {
+      console.log(`🗑️ Duplicado encontrado y removido: "${story.title}"`)
+    }
+  }
+
+  if (seen.size < stories.length) {
+    const duplicates = stories.length - seen.size
+    console.log(`⚠️ Se eliminaron ${duplicates} duplicados`)
+
+    // Limpiar duplicados de la DB local si es la primera carga
+    if (cleanFromDb) {
+      console.log("🧹 Limpiando duplicados de la base de datos local...")
+      for (const story of stories) {
+        if (!cloudIds.has(story.id)) {
+          const key = `${story.title.trim().toLowerCase()}|${story.text.trim().toLowerCase()}`
+          if (seen.has(key) && seen.has(key)) {
+            await localDb.deleteStory(story.id)
+            console.log(`🗑️ Eliminado: "${story.title}"`)
+          }
+        }
+      }
+    }
+  }
+
+  return unique
+}
+
+// Función para deduplicar cuentos basándose en título+texto
+function deduplicateStories(stories: Story[]): Story[] {
+  const seen = new Set<string>()
+  const unique: Story[] = []
+
+  for (const story of stories) {
+    const key = `${story.title.trim().toLowerCase()}|${story.text.trim().toLowerCase()}`
+
+    if (!seen.has(key)) {
+      seen.add(key)
+      unique.push(story)
+    } else {
+      console.log(`🗑️ Duplicado filtrado: "${story.title}"`)
+    }
+  }
+
+  if (seen.size < stories.length) {
+    console.log(`⚠️ Se filtraron ${stories.length - seen.size} duplicados`)
+  }
+
+  return unique
+}
+
+// Función para eliminar duplicados guardados en la base de datos local
+export async function cleanDuplicates(): Promise<{ cleaned: number; remaining: number }> {
+  console.log("🧹 INICIANDO LIMPIEZA DE DUPLICADOS...")
+
+  const allStories = await localDb.getAllStories()
+  console.log(`📦 Encontrados ${allStories.length} cuentos totales`)
+
+  const seen = new Set<string>()
+  const toDelete: string[] = []
+
+  for (const story of allStories) {
+    const key = `${story.title.trim().toLowerCase()}|${story.text.trim().toLowerCase()}`
+
+    if (seen.has(key)) {
+      toDelete.push(story.id)
+      console.log(`🗑️ Marcado para eliminar: "${story.title}"`)
+    } else {
+      seen.add(key)
+    }
+  }
+
+  console.log(`🗑️ Eliminando ${toDelete.length} duplicados...`)
+
+  for (const id of toDelete) {
+    await localDb.deleteStory(id)
+  }
+
+  const remaining = allStories.length - toDelete.length
+  console.log(`✅ Limpieza completada: ${toDelete.length} eliminados, ${remaining} restantes`)
+
+  return { cleaned: toDelete.length, remaining }
 }
 
 // Función para deduplicar cuentos basándose en título+texto

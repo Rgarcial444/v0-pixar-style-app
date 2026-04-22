@@ -2,10 +2,9 @@
 
 import { useState } from "react"
 import ToyCarButton from "@/components/toy-car-button"
-import { Download, Search, Loader2, Sparkles, Trash2 } from "lucide-react"
+import { Download, Search, Loader2, Sparkles } from "lucide-react"
 import { exportAllStories } from "@/lib/db"
 import { useToast } from "@/hooks/use-toast"
-import { cleanDuplicates } from "@/lib/hybrid-db"
 import { cn } from "@/lib/utils"
 
 type Props = {
@@ -15,7 +14,7 @@ type Props = {
 }
 
 export default function BackupTools({ onToggleSearch, showSearch, className }: Props) {
-  const [busyAction, setBusyAction] = useState<null | "export" | "clean">(null)
+  const [busyAction, setBusyAction] = useState<null | "export">(null)
   const { toast } = useToast()
 
   const onExport = async () => {
@@ -33,22 +32,6 @@ export default function BackupTools({ onToggleSearch, showSearch, className }: P
     } catch (e) {
       console.error(e)
       toast({ title: "Error al exportar", variant: "destructive" })
-    } finally {
-      setBusyAction(null)
-    }
-  }
-
-  const onCleanDuplicates = async () => {
-    try {
-      setBusyAction("clean")
-      const result = await cleanDuplicates()
-      toast({
-        title: "Duplicados eliminados",
-        description: `${result.cleaned} eliminados, ${result.remaining} cuentos únicos restantes.`,
-      })
-    } catch (e) {
-      console.error(e)
-      toast({ title: "Error al limpiar", variant: "destructive" })
     } finally {
       setBusyAction(null)
     }
@@ -116,23 +99,6 @@ export default function BackupTools({ onToggleSearch, showSearch, className }: P
             >
               <Search className="h-4 w-4" />
               {showSearch ? "Ocultar" : "Buscar y filtrar"}
-            </ToyCarButton>
-
-            <ToyCarButton
-              onClick={onCleanDuplicates}
-              disabled={busyAction !== null}
-              variant="secondary"
-              showWheels={false}
-              className="px-3 py-2 text-sm"
-              aria-label="Limpiar duplicados"
-              title="Eliminar cuentos duplicados"
-            >
-              {busyAction === "clean" ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4" />
-              )}
-              Limpiar duplicados
             </ToyCarButton>
           </div>
         </div>
