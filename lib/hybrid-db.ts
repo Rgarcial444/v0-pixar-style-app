@@ -95,7 +95,8 @@ export async function getAllStories(): Promise<Story[]> {
       const withImages = cloudStories.filter((s) => s.imageBlob || s.imageDataUrl).length
       console.log(`📸 ${withImages} cuentos tienen imágenes`)
 
-      return cloudStories
+      // DEDUPLICAR: eliminar duplicados basándose en título+texto
+      return deduplicateStories(cloudStories)
     } catch (error) {
       console.error("❌ Error cargando desde nube:", error)
       console.log("🔄 Fallback a almacenamiento local...")
@@ -104,7 +105,7 @@ export async function getAllStories(): Promise<Story[]> {
       try {
         const localStories = await localDb.getAllStories()
         console.log(`✅ Fallback: cargados ${localStories.length} cuentos locales`)
-        return localStories
+        return deduplicateStories(localStories)
       } catch (localError) {
         console.error("❌ Error cargando localmente:", localError)
         return []
@@ -115,12 +116,69 @@ export async function getAllStories(): Promise<Story[]> {
     try {
       const localStories = await localDb.getAllStories()
       console.log(`✅ Cargados ${localStories.length} cuentos locales`)
-      return localStories
+      return deduplicateStories(localStories)
     } catch (localError) {
       console.error("❌ Error cargando localmente:", localError)
       return []
     }
   }
+}
+
+// Función para deduplicar cuentos basándose en título+texto
+function deduplicateStories(stories: Story[]): Story[] {
+  const seen = new Set<string>()
+  const unique: Story[] = []
+
+  for (const story of stories) {
+    // Crear clave única basada en título y texto (normalizados)
+    const key = `${story.title.trim().toLowerCase()}|${story.text.trim().toLowerCase()}`
+
+    if (!seen.has(key)) {
+      seen.add(key)
+      unique.push(story)
+    } else {
+      console.log(`🗑️ Duplicado encontrado y removido: "${story.title}"`)
+    }
+  }
+
+  if (seen.size < stories.length) {
+    console.log(`⚠️ Se eliminaron ${stories.length - seen.size} duplicados`)
+  }
+
+  return unique
+}
+
+// Función para eliminar duplicados guardados en la base de datos local
+export async function cleanDuplicates(): Promise<{ cleaned: number; remaining: number }> {
+  console.log("🧹 INICIANDO LIMPIEZA DE DUPLICADOS...")
+
+  const allStories = await localDb.getAllStories()
+  console.log(`📦 Encontrados ${allStories.length} cuentos totales`)
+
+  const seen = new Set<string>()
+  const toDelete: string[] = []
+
+  for (const story of allStories) {
+    const key = `${story.title.trim().toLowerCase()}|${story.text.trim().toLowerCase()}`
+
+    if (seen.has(key)) {
+      toDelete.push(story.id)
+      console.log(`🗑️ Marcado para eliminar: "${story.title}"`)
+    } else {
+      seen.add(key)
+    }
+  }
+
+  console.log(`🗑️ Eliminando ${toDelete.length} duplicados...`)
+
+  for (const id of toDelete) {
+    await localDb.deleteStory(id)
+  }
+
+  const remaining = allStories.length - toDelete.length
+  console.log(`✅ Limpieza completada: ${toDelete.length} eliminados, ${remaining} restantes`)
+
+  return { cleaned: toDelete.length, remaining }
 }
 
 export async function deleteStory(id: string, password: string): Promise<void> {
