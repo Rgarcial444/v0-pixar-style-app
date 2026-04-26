@@ -173,6 +173,27 @@ export default function StoryForm({ onCreated }: Props) {
     },
     [handleFile, toast, addDebugInfo],
   )
+  
+  // Función helper para activar input de archivo (más robusta para móviles)
+  const triggerFileInput = useCallback((input: HTMLInputElement | null) => {
+    if (!input) return
+    addDebugInfo("🖱️ Triggering file input...")
+    
+    // Método 1: .click() directo
+    try {
+      input.click()
+      addDebugInfo("✅ Input triggered")
+    } catch (err) {
+      // Método 2: crear evento manualmente para algunos navegantes móviles
+      addDebugInfo("⚠️ click() falló, intentando con dispatchEvent")
+      const event = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+      })
+      input.dispatchEvent(event)
+    }
+  }, [addDebugInfo])
 
   const onFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -453,7 +474,7 @@ export default function StoryForm({ onCreated }: Props) {
                 </button>
               </div>
               <div className="flex gap-2">
-                <button type="button" onClick={() => inputRef.current?.click()} className="flex-1 flex items-center justify-center gap-2 py-2 bg-white border border-sky-200 rounded-lg text-sm">
+                <button type="button" onClick={() => triggerFileInput(inputRef.current)} className="flex-1 flex items-center justify-center gap-2 py-2 bg-white border border-sky-200 rounded-lg text-sm touch-manipulation">
                   <ImagePlus className="h-4 w-4" />
                   Cambiar
                 </button>
@@ -462,11 +483,20 @@ export default function StoryForm({ onCreated }: Props) {
           ) : (
             <div className="space-y-3">
               <div
+                id="drop-zone-clickable"
                 className={cn(
-                  "w-full h-24 md:h-32 border-2 border-dashed rounded-xl flex items-center justify-center transition-all duration-300 cursor-pointer",
+                  "w-full h-24 md:h-32 border-2 border-dashed rounded-xl flex items-center justify-center transition-all duration-300 cursor-pointer touch-manipulation select-none",
                   isDragOver ? "border-emerald-400 bg-emerald-50" : "border-sky-300 bg-white/50 hover:border-sky-400",
                 )}
-                onClick={() => inputRef.current?.click()}
+                onClick={() => triggerFileInput(inputRef.current)}
+                role="button"
+                aria-label="Subir imagen"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    triggerFileInput(inputRef.current)
+                  }
+                }}
               >
                 <div className="text-center">
                   <ImagePlus className="h-8 w-8 md:h-12 md:w-12 text-sky-500 mx-auto mb-2" />
@@ -474,11 +504,11 @@ export default function StoryForm({ onCreated }: Props) {
                 </div>
               </div>
               <div className="flex gap-2">
-                <button type="button" onClick={() => inputRef.current?.click()} className="flex-1 flex items-center justify-center gap-2 py-2 bg-white border border-sky-200 rounded-lg text-sm text-sky-700">
+                <button type="button" onClick={() => triggerFileInput(inputRef.current)} className="flex-1 flex items-center justify-center gap-2 py-2 bg-white border border-sky-200 rounded-lg text-sm text-sky-700 touch-manipulation">
                   <FolderOpen className="h-4 w-4" />
                   Galería
                 </button>
-                <button type="button" onClick={() => cameraInputRef.current?.click()} className="flex-1 flex items-center justify-center gap-2 py-2 bg-white border border-emerald-200 rounded-lg text-sm text-emerald-700">
+                <button type="button" onClick={() => triggerFileInput(cameraInputRef.current)} className="flex-1 flex items-center justify-center gap-2 py-2 bg-white border border-emerald-200 rounded-lg text-sm text-emerald-700 touch-manipulation">
                   <Camera className="h-4 w-4" />
                   Cámara
                 </button>
@@ -486,15 +516,43 @@ export default function StoryForm({ onCreated }: Props) {
             </div>
           )}
 
-          {/* Inputs ocultos */}
-          <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
-          <input
+          {/* Inputs de archivo - ocultos accesible para móviles */}
+          <input 
+            ref={inputRef} 
+            type="file" 
+            accept="image/*" 
+            onChange={onFileChange} 
+            id="story-image-input"
+            style={{ 
+              position: 'absolute', 
+              width: '1px', 
+              height: '1px', 
+              padding: 0, 
+              margin: -1, 
+              overflow: 'hidden', 
+              clip: 'rect(0,0,0,0)', 
+              whiteSpace: 'nowrap', 
+              border: 0 
+            }}
+          />
+          <input 
             ref={cameraInputRef}
-            type="file"
-            accept="image/*"
+            type="file" 
+            accept="image/*" 
             capture="environment"
-            className="hidden"
-            onChange={onFileChange}
+            onChange={onFileChange} 
+            id="story-camera-input"
+            style={{ 
+              position: 'absolute', 
+              width: '1px', 
+              height: '1px', 
+              padding: 0, 
+              margin: -1, 
+              overflow: 'hidden', 
+              clip: 'rect(0,0,0,0)', 
+              whiteSpace: 'nowrap', 
+              border: 0 
+            }}
           />
         </div>
 
