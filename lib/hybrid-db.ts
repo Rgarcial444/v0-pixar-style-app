@@ -150,4 +150,4 @@ export async function forceSyncToCloud(): Promise<{ success: number; errors: num
   }
 
   return { success, errors }
-}
+}// trigger rebuild
