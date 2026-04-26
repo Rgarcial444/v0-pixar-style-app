@@ -17,9 +17,10 @@ import { getAllStories, checkDatabaseStatus } from "@/lib/hybrid-db"
 
 export default function Page() {
   const [stories, setStories] = useState<Story[]>([])
-  const [query, setQuery] = useState("")
+  const [query, setQuery] = useState<Story[]>([])
+  const [queryStr, setQueryStr] = useState("")
   const [dateFilter, setDateFilter] = useState<string>("")
-  const [showForm, setShowForm] = useState(false)
+  const [showForm, setShowForm] = useState<boolean>(false)
   const [showSearch, setShowSearch] = useState(false)
   const [dbStatus, setDbStatus] = useState<{ supabaseConfigured: boolean; tablesExist: boolean }>({
     supabaseConfigured: false,
@@ -51,13 +52,13 @@ export default function Page() {
   }, [])
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
+    const q = queryStr.trim().toLowerCase()
     return stories.filter((s) => {
       const matchesQuery = !q || s.title.toLowerCase().includes(q) || s.text.toLowerCase().includes(q)
       const matchesDate = !dateFilter || s.createdAt.slice(0, 10) === dateFilter
       return matchesQuery && matchesDate
     })
-  }, [stories, query, dateFilter])
+  }, [stories, queryStr, dateFilter])
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-sky-100 via-blue-100 to-indigo-100">
@@ -94,8 +95,8 @@ export default function Page() {
                   <Search className="h-4 w-4 text-sky-600 flex-shrink-0" />
                   <Input
                     placeholder="Buscar..."
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
+                    value={queryStr}
+                    onChange={(e) => setQueryStr(e.target.value)}
                     className="border-0 bg-transparent"
                   />
                 </div>
